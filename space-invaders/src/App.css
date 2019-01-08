@@ -1,0 +1,25 @@
+canvas {
+	display: block;
+	background-color: #000000;
+	margin: 0 auto;
+}
+
+.centerScreen {
+	text-align: center;
+	display: block;
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+}
+
+.title {
+	top: 20%;
+	color: green;
+	font-size: 80px;
+}
+
+.pressSpace {
+	top: 35%;
+	font-size: 20px;
+	color: #ffffff;
+}
