@@ -9,7 +9,7 @@ export default class Ship extends GameObject {
             position: args.position,
             onDie: args.onDie,
             speed: 2.5,
-            radius: 15,
+            radius: 40,
             life: 5
         });
         this.bullets = [];
@@ -55,6 +55,7 @@ export default class Ship extends GameObject {
                 this.bullets.splice(index, 1);
             } else {
                 this.bullets[index].update();
+
                 this.bullets[index].render(state);
             }
             index++;
@@ -89,7 +90,7 @@ export default class Ship extends GameObject {
             this.shipW,
             this.shipY,
             this.position.x - 32,
-            this.position.y - 45,
+            this.position.y - 42,
 
             this.shipW,
             this.shipY

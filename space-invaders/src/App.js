@@ -6,11 +6,36 @@ import GameOverScreen from "./ReactComponents/GameOverScreen";
 import ControlOverlay from "./ReactComponents/ControlOverlay";
 import Ship from "./GameComponents/Ship";
 import Invader from "./GameComponents/Invader";
+import Heart from "./assets/heart.png";
 import { checkCollisionsWith } from "./Helper";
-import "./App.css";
+import "./App.scss";
 
-const width = 800;
+// 3 4 3 4 3 4 3 4 = 28
+// 4 5 4 5 4 5 = 27
+// 5 6 5 6 5 = 27
+// 6 7 6 7 = 26
+// 7 8 7 8 = 30
+// 8 9 8 = 25
+
+const width = window.innerWidth;
 const height = window.innerHeight;
+let scale;
+let rows;
+if (width <= 1000) {
+    scale = width / 4;
+    rows = 8;
+} else if (width <= 1500) {
+    scale = width / 6;
+    rows = 5;
+} else {
+    scale = width / 9;
+    // rows = 3;
+    rows = 6;
+}
+
+const invaderAmount = 60;
+
+// const height = 400;
 
 const GameState = {
     StartScreen: 0,
@@ -26,7 +51,8 @@ class App extends Component {
             screen: {
                 width: width,
                 height: height,
-                ratio: window.devicePixelRatio || 1
+                ratio: window.devicePixelRatio || 1,
+                scale: scale
             },
             score: 0,
             gameState: GameState.StartScreen,
@@ -58,12 +84,12 @@ class App extends Component {
             onDie: this.die.bind(this),
             position: {
                 x: this.state.screen.width / 2,
-                y: this.state.screen.height - 50
+                y: this.state.screen.height - 42
             }
         });
         this.ship = ship;
 
-        this.createInvaders(27);
+        this.createInvaders(invaderAmount);
 
         this.setState({
             gameState: GameState.Playing,
@@ -110,12 +136,9 @@ class App extends Component {
                 this.setState({ gameState: GameState.GameOver });
             }
 
-            context.save();
-            context.scale(this.state.screen.ratio, this.state.screen.ratio);
+            this.styleContext(context);
 
-            context.fillRect(0, 0, this.state.screen.width, this.state.screen.height);
-            context.globalAlpha = 1;
-            // checkCollisionsWith(this.ship.bullets, this.invaders);
+            checkCollisionsWith(this.ship.bullets, this.invaders);
             checkCollisionsWith([this.ship], this.invaders);
 
             if (keys.space || keys.left || keys.right) {
@@ -130,7 +153,7 @@ class App extends Component {
                 this.ship.update(keys);
                 this.ship.render(this.state);
             }
-
+            // console.log(this.invaders[0]);
             this.renderInvaders(this.state);
             this.setState({ previousState: this.state.gameState });
             context.restore();
@@ -144,25 +167,38 @@ class App extends Component {
     }
 
     createInvaders(count) {
-        const newPosition = { x: 100, y: 20 };
+        // check how many rows there are
+
+        // then you are able to check height of the invaders
+        // total height is 240px for 5 rows;
+        const invaderHeight = rows * 50 + (rows - 1) * 10;
+        // compare if the height is more or less than 1/4th of the total height
+        let yPosition = 25;
+        if (invaderHeight > height / 4) {
+            yPosition = height / 4 - invaderHeight;
+        }
+        console.log(yPosition);
+        const newPosition = { x: scale, y: yPosition };
         let swapStartX = true;
 
-        for (var i = 0; i < count; i++) {
+        for (let i = 0; i < count; i++) {
             const invader = new Invader({
                 position: { x: newPosition.x, y: newPosition.y },
                 onDie: this.increaseScore.bind(this, false)
             });
 
-            newPosition.x += invader.radius + 20;
+            newPosition.x += scale;
 
-            if (newPosition.x + invader.radius + 50 >= this.state.screen.width) {
-                newPosition.x = swapStartX ? 110 : 100;
+            if (newPosition.x + invader.invaderW - invader.radius >= this.state.screen.width) {
+                newPosition.x = swapStartX ? scale / 2 : scale;
                 swapStartX = !swapStartX;
-                newPosition.y += invader.radius + 20;
+                newPosition.y += invader.invaderY / 2 + 10;
             }
 
             this.invaders.push(invader);
         }
+
+        console.log(this.invaders);
     }
 
     renderInvaders(state) {
@@ -178,6 +214,9 @@ class App extends Component {
             ) {
                 reverse = true;
             } else {
+                if (index === 0) {
+                    console.log(this.invaders[0]);
+                }
                 invader.update();
                 invader.render(state);
             }
@@ -192,8 +231,17 @@ class App extends Component {
     reverseInvaders() {
         for (let invader of this.invaders) {
             invader.reverse();
-            invader.position.y += 50;
+            invader.position.y += height / 20;
         }
+    }
+
+    styleContext(context) {
+        context.save();
+        context.scale(this.state.screen.ratio, this.state.screen.ratio);
+
+        context.fillStyle = "#181818";
+        context.fillRect(0, 0, this.state.screen.width, this.state.screen.height);
+        context.globalAlpha = 1;
     }
 
     componentDidMount() {
@@ -224,15 +272,25 @@ class App extends Component {
     }
 
     render() {
+        const hearts = [];
+        if (this.ship) {
+            for (let i = 0; i < this.ship.life; i++) {
+                hearts.push(<img className="hearts_item" src={Heart} alt="heart" />);
+            }
+        }
+
         return (
-            <div>
+            <div className="space-invaders">
                 {this.showControls && <ControlOverlay />}
                 {this.state.gameState === GameState.StartScreen && <TitleScreen />}
                 {this.state.gameState === GameState.GameOver && <GameOverScreen score={this.state.score} />}
+                <div className="hearts">{hearts}</div>
                 <canvas
                     ref="canvas"
-                    width={this.state.screen.width * this.state.screen.ratio}
-                    height={this.state.screen.height * this.state.screen.ratio}
+                    width={this.state.screen.width}
+                    height={this.state.screen.height}
+                    // width={this.state.screen.width * this.state.screen.ratio}
+                    // height={this.state.screen.height * this.state.screen.ratio}
                 />
             </div>
         );

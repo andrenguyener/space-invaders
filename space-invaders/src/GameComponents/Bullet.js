@@ -2,7 +2,7 @@ import GameObject from "./GameObject";
 
 export default class Bullet extends GameObject {
     constructor(args) {
-        super({ name: "bullet", position: args.position, speed: 5, radius: 5, life: 1 });
+        super({ name: "bullet", position: args.position, speed: 5, radius: 2, life: 1 });
         this.direction = args.direction;
     }
 
@@ -21,6 +21,7 @@ export default class Bullet extends GameObject {
 
         const context = state.context;
         context.save();
+        // context.save();
         context.translate(this.position.x, this.position.y);
         context.fillStyle = "#FFFFFF";
         // context.lineWidth = 5;
@@ -30,6 +31,7 @@ export default class Bullet extends GameObject {
         // context.arc(0, 0, 2, 0, 2 * Math.PI);
         // context.closePath();
         context.fill();
+
         context.restore();
     }
 }

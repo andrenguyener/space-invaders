@@ -1,4 +1,4 @@
-export function checkCollisionsWith(items1, items2) {
+export const checkCollisionsWith = (items1, items2) => {
     let a = items1.length - 1;
     let b;
     for (a; a > -1; --a) {
@@ -19,9 +19,9 @@ export function checkCollisionsWith(items1, items2) {
             }
         }
     }
-}
+};
 
-export function checkCollision(obj1, obj2) {
+export const checkCollision = (obj1, obj2) => {
     let vx = obj1.position.x - obj2.position.x;
     let vy = obj1.position.y - obj2.position.y;
     let length = Math.sqrt(vx * vx + vy * vy);
@@ -29,4 +29,4 @@ export function checkCollision(obj1, obj2) {
         return true;
     }
     return false;
-}
+};
