@@ -2,7 +2,7 @@ import GameObject from "./GameObject";
 
 export default class Bullet extends GameObject {
     constructor(args) {
-        super({ name: "bullet", position: args.position, speed: 5, radius: 2, life: 1 });
+        super({ name: "bullet", position: args.position, speed: 5, radius: 1, life: 1 });
         this.direction = args.direction;
     }
 

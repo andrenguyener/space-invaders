@@ -16,7 +16,7 @@ export default class Invader extends GameObject {
             position: args.position,
             onDie: args.onDie,
             speed: 1,
-            radius: size / 4,
+            radius: size / 3.5,
             life: 1
         });
         this.direction = Direction.Right;
@@ -71,7 +71,7 @@ export default class Invader extends GameObject {
     }
 
     render(state) {
-        if (this.position.y > state.screen.height || this.position.y < 0) {
+        if (this.position.y > state.screen.height) {
             this.die();
         }
 

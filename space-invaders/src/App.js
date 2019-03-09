@@ -33,7 +33,9 @@ if (width <= 1000) {
     rows = 6;
 }
 
-const invaderAmount = 60;
+const invaderAmount = 25;
+
+console.log(width, height);
 
 // const height = 400;
 
@@ -87,7 +89,9 @@ class App extends Component {
                 y: this.state.screen.height - 42
             }
         });
+
         this.ship = ship;
+        console.log(this.ship);
 
         this.createInvaders(invaderAmount);
 
@@ -145,7 +149,7 @@ class App extends Component {
                 this.showControls = false;
             }
 
-            for (var i = 0; i < this.invaders.length; i++) {
+            for (let i = 0; i < this.invaders.length; i++) {
                 checkCollisionsWith(this.invaders[i].bullets, [this.ship]);
             }
 
@@ -213,10 +217,9 @@ class App extends Component {
                 invader.position.x - invader.radius <= 0
             ) {
                 reverse = true;
+            } else if (invader.position.y + invader.radius >= this.state.screen.height) {
+                this.die();
             } else {
-                if (index === 0) {
-                    console.log(this.invaders[0]);
-                }
                 invader.update();
                 invader.render(state);
             }
@@ -237,7 +240,7 @@ class App extends Component {
 
     styleContext(context) {
         context.save();
-        context.scale(this.state.screen.ratio, this.state.screen.ratio);
+        // context.scale(this.state.screen.ratio, this.state.screen.ratio);
 
         context.fillStyle = "#181818";
         context.fillRect(0, 0, this.state.screen.width, this.state.screen.height);
