@@ -9,8 +9,8 @@ export default class Ship extends GameObject {
             position: args.position,
             onDie: args.onDie,
             speed: 2.5,
-            radius: 40,
-            life: 5
+            radius: 35,
+            life: 1
         });
         this.bullets = [];
         this.lastShot = 0;
@@ -34,7 +34,8 @@ export default class Ship extends GameObject {
         if (keys.space && Date.now() - this.lastShot > 250) {
             const bullet = new Bullet({
                 position: { x: this.position.x, y: this.position.y - 5 },
-                direction: "up"
+                direction: "up",
+                color: "#ffffff"
             });
 
             this.bullets.push(bullet);
@@ -90,23 +91,12 @@ export default class Ship extends GameObject {
             this.shipW,
             this.shipY,
             this.position.x - 32,
-            this.position.y - 42,
+            this.position.y - 85,
 
             this.shipW,
             this.shipY
         );
-        // context.strokeStyle = "#ffffff";
-        // context.fillStyle = "#ffffff";
-        // context.lineWidth = 2;
-        // context.beginPath();
-        // context.moveTo(0, -25);
-        // context.lineTo(15, 15);
-        // context.lineTo(5, 7);
-        // context.lineTo(-5, 7);
-        // context.lineTo(-15, 15);
-        // context.closePath();
-        // context.fill();
-        // context.stroke();
+
         context.restore();
     }
 }

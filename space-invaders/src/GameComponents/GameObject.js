@@ -7,6 +7,7 @@ export default class GameObject {
         this.radius = args.radius;
         this.delete = false;
         this.life = args.life;
+        this.color = args.color;
     }
 
     die() {

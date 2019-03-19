@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import titleImage from "./../assets/title.png";
 
-export default class TitleScreen extends React.Component {
+export default class TitleScreen extends Component {
     render() {
         return (
             <div className="title">

@@ -1,48 +1,43 @@
 import React, { Component } from "react";
-import io from "socket.io-client";
+import { init as firebaseInit, getHighScores, addScore } from "./firebase";
 import InputManager from "./InputManager";
 import TitleScreen from "./ReactComponents/TitleScreen";
 import GameOverScreen from "./ReactComponents/GameOverScreen";
+import HighScoreScreen from "./ReactComponents/HighScoreScreen";
 import ControlOverlay from "./ReactComponents/ControlOverlay";
+import LevelOverlay from "./ReactComponents/LevelOverlay";
 import Ship from "./GameComponents/Ship";
 import Invader from "./GameComponents/Invader";
 import Heart from "./assets/heart.png";
 import { checkCollisionsWith } from "./Helper";
 import "./App.scss";
 
-// 3 4 3 4 3 4 3 4 = 28
-// 4 5 4 5 4 5 = 27
-// 5 6 5 6 5 = 27
-// 6 7 6 7 = 26
-// 7 8 7 8 = 30
-// 8 9 8 = 25
-
 const width = window.innerWidth;
 const height = window.innerHeight;
 let scale;
 let rows;
+let divider;
 if (width <= 1000) {
-    scale = width / 4;
+    divider = 4;
+    scale = width / divider;
     rows = 8;
 } else if (width <= 1500) {
-    scale = width / 6;
+    divider = 6;
+    scale = width / divider;
     rows = 5;
 } else {
-    scale = width / 9;
-    // rows = 3;
-    rows = 6;
+    divider = 9;
+    scale = width / divider;
+    rows = 3;
 }
 
 const invaderAmount = 25;
 
-console.log(width, height);
-
-// const height = 400;
-
 const GameState = {
     StartScreen: 0,
     Playing: 1,
-    GameOver: 2
+    GameOver: 2,
+    HighScores: 3
 };
 
 class App extends Component {
@@ -54,11 +49,14 @@ class App extends Component {
                 width: width,
                 height: height,
                 ratio: window.devicePixelRatio || 1,
-                scale: scale
+                scale: scale,
+                rows: 10
             },
+            level: 1,
             score: 0,
             gameState: GameState.StartScreen,
             previousState: GameState.StartScreen,
+            showTopScore: false,
             context: null
         };
 
@@ -68,10 +66,12 @@ class App extends Component {
         this.previousDelta = 0;
         this.fpsLimit = 30;
         this.showControls = false;
-        this.socket = null;
+        this.showLevel = false;
+        this.highScores = [];
+        firebaseInit();
     }
 
-    handleResize(value, e) {
+    handleResize = (value, e) => {
         this.setState({
             screen: {
                 width: width,
@@ -79,19 +79,18 @@ class App extends Component {
                 ratio: window.devicePixelRatio || 1
             }
         });
-    }
+    };
 
-    startGame() {
+    startGame = () => {
         let ship = new Ship({
             onDie: this.die.bind(this),
             position: {
                 x: this.state.screen.width / 2,
-                y: this.state.screen.height - 42
+                y: this.state.screen.height
             }
         });
 
         this.ship = ship;
-        console.log(this.ship);
 
         this.createInvaders(invaderAmount);
 
@@ -100,20 +99,90 @@ class App extends Component {
             score: 0
         });
         this.showControls = true;
-    }
 
-    die() {
-        this.setState({ gameState: GameState.GameOver });
+        this.getScores();
+    };
+
+    getScores = async () => {
+        const scoresObj = await getHighScores();
+        const scoresArray = Object.keys(scoresObj).map(key => {
+            return scoresObj[key];
+        });
+
+        scoresArray.sort((a, b) => {
+            return b.points - a.points;
+        });
+
+        this.highScores = scoresArray.slice(0, 10);
+        return this.highScores;
+    };
+
+    userNameInputted = user => {
+        this.setState({
+            showTopScore: false
+        });
+        this.addScore(user, this.state.score);
+    };
+
+    addScore = async (user, score) => {
+        await addScore(user, score);
+    };
+
+    nextLevel = () => {
+        let ship = new Ship({
+            onDie: this.die.bind(this),
+            position: {
+                x: this.state.screen.width / 2,
+                y: this.state.screen.height - 42
+            }
+        });
+
+        const nextLevel = this.state.level + 1;
+
+        this.ship = ship;
+
+        this.setState(
+            {
+                level: nextLevel
+            },
+            () => {
+                this.createInvaders(invaderAmount + 10 * (nextLevel - 1));
+                this.lastStateChange = Date.now();
+                this.showLevel = true;
+            }
+        );
+    };
+
+    isHighScore = () => {
+        for (const item of this.highScores) {
+            if (this.state.score > item.score) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    die = () => {
+        this.setState({ gameState: GameState.GameOver, level: 1 });
+
         this.ship = null;
         this.invaders = [];
         this.lastStateChange = Date.now();
-    }
+        this.showControls = false;
 
-    increaseScore(val) {
-        this.setState({ score: this.state.score + 500 });
-    }
+        if (this.isHighScore()) {
+            this.setState({
+                showTopScore: true
+            });
+        }
+    };
 
-    update(currentDelta) {
+    increaseScore = val => {
+        this.setState({ score: this.state.score + 500 * this.state.level });
+    };
+
+    update = currentDelta => {
         var delta = currentDelta - this.previousDelta;
 
         if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
@@ -127,7 +196,16 @@ class App extends Component {
             this.startGame();
         }
 
-        if (this.state.gameState === GameState.GameOver && keys.enter) {
+        if (this.state.gameState === GameState.GameOver && keys.space) {
+            if (!this.state.showTopScore) {
+                this.getScores().then(scores => {
+                    this.highScores = scores;
+                    this.setState({ gameState: GameState.HighScores });
+                });
+            }
+        }
+
+        if (this.state.gameState === GameState.HighScores && keys.space) {
             this.setState({ gameState: GameState.StartScreen });
         }
 
@@ -137,7 +215,7 @@ class App extends Component {
             }
 
             if (this.invaders.length === 0) {
-                this.setState({ gameState: GameState.GameOver });
+                this.nextLevel();
             }
 
             this.styleContext(context);
@@ -149,6 +227,10 @@ class App extends Component {
                 this.showControls = false;
             }
 
+            if (Date.now() - this.lastStateChange > 5000) {
+                this.showLevel = false;
+            }
+
             for (let i = 0; i < this.invaders.length; i++) {
                 checkCollisionsWith(this.invaders[i].bullets, [this.ship]);
             }
@@ -157,36 +239,31 @@ class App extends Component {
                 this.ship.update(keys);
                 this.ship.render(this.state);
             }
-            // console.log(this.invaders[0]);
+
             this.renderInvaders(this.state);
             this.setState({ previousState: this.state.gameState });
             context.restore();
-
-            // this.socket.emit("movement", this.state.input.pressedKeys);
         }
 
         requestAnimationFrame(() => {
             this.update();
         });
-    }
+    };
 
-    createInvaders(count) {
-        // check how many rows there are
+    createInvaders = count => {
+        const invaderHeight = (count / (divider - 1)) * 50 + (rows - 1) * 10;
 
-        // then you are able to check height of the invaders
-        // total height is 240px for 5 rows;
-        const invaderHeight = rows * 50 + (rows - 1) * 10;
-        // compare if the height is more or less than 1/4th of the total height
-        let yPosition = 25;
+        let yPosition = 50;
         if (invaderHeight > height / 4) {
             yPosition = height / 4 - invaderHeight;
         }
-        console.log(yPosition);
+
         const newPosition = { x: scale, y: yPosition };
         let swapStartX = true;
 
         for (let i = 0; i < count; i++) {
             const invader = new Invader({
+                life: this.state.level,
                 position: { x: newPosition.x, y: newPosition.y },
                 onDie: this.increaseScore.bind(this, false)
             });
@@ -201,11 +278,9 @@ class App extends Component {
 
             this.invaders.push(invader);
         }
+    };
 
-        console.log(this.invaders);
-    }
-
-    renderInvaders(state) {
+    renderInvaders = state => {
         let index = 0;
         let reverse = false;
 
@@ -229,23 +304,23 @@ class App extends Component {
         if (reverse) {
             this.reverseInvaders();
         }
-    }
+    };
 
-    reverseInvaders() {
+    reverseInvaders = () => {
         for (let invader of this.invaders) {
             invader.reverse();
             invader.position.y += height / 20;
         }
-    }
+    };
 
-    styleContext(context) {
+    styleContext = context => {
         context.save();
         // context.scale(this.state.screen.ratio, this.state.screen.ratio);
-
         context.fillStyle = "#181818";
+
         context.fillRect(0, 0, this.state.screen.width, this.state.screen.height);
         context.globalAlpha = 1;
-    }
+    };
 
     componentDidMount() {
         window.addEventListener("resize", this.handleResize.bind(this, false));
@@ -256,17 +331,6 @@ class App extends Component {
         requestAnimationFrame(() => {
             this.update();
         });
-
-        // this.socket = io(`http://localhost:5000`);
-
-        // this.socket.on("message", function(data) {
-        // 	console.log(data);
-        // });
-
-        // this.socket.emit("new player");
-        // setInterval(() => {
-        // 	this.socket.emit("movement", this.state.input.pressedKeys);
-        // }, 1000 / 60);
     }
 
     componentWillUnmount() {
@@ -278,23 +342,27 @@ class App extends Component {
         const hearts = [];
         if (this.ship) {
             for (let i = 0; i < this.ship.life; i++) {
-                hearts.push(<img className="hearts_item" src={Heart} alt="heart" />);
+                hearts.push(<img className="hearts_item" src={Heart} alt="heart" key={i} />);
             }
         }
 
         return (
             <div className="space-invaders">
                 {this.showControls && <ControlOverlay />}
+                {this.showLevel && <LevelOverlay level={this.state.level} />}
                 {this.state.gameState === GameState.StartScreen && <TitleScreen />}
-                {this.state.gameState === GameState.GameOver && <GameOverScreen score={this.state.score} />}
+                {this.state.gameState === GameState.GameOver && (
+                    <GameOverScreen
+                        score={this.state.score}
+                        isHighScore={this.state.showTopScore}
+                        onUserInput={this.userNameInputted}
+                    />
+                )}
+                {this.state.gameState === GameState.HighScores && <HighScoreScreen scores={this.highScores} />}
+
                 <div className="hearts">{hearts}</div>
-                <canvas
-                    ref="canvas"
-                    width={this.state.screen.width}
-                    height={this.state.screen.height}
-                    // width={this.state.screen.width * this.state.screen.ratio}
-                    // height={this.state.screen.height * this.state.screen.ratio}
-                />
+                <div className="gameScore">{this.state.score}</div>
+                <canvas ref="canvas" width={this.state.screen.width} height={this.state.screen.height} />
             </div>
         );
     }

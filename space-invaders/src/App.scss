@@ -15,7 +15,7 @@ h1 {
 body {
     padding: 0;
     margin: 0;
-    font-family: "PT Mono", serif;
+    font-family: "Press Start 2P", cursive, "PT Mono", serif;
     color: #ffffff;
 }
 canvas {
@@ -23,6 +23,13 @@ canvas {
     // justify-content: center;
     // align-items: center;
     background-color: #181818;
+    // background: repeating-linear-gradient(
+    //     to bottom,
+    //     #181818,
+    //     #181818 2px,
+    //     lighten(#0f0a1e, 3%) 2px,
+    //     lighten(#0f0a1e, 3%) 4px
+    // );
     // align-self: center;
 }
 
@@ -75,6 +82,10 @@ canvas {
 
     &-title {
         font-size: 50px;
+        line-height: 40px;
+        letter-spacing: 5px;
+        text-shadow: -2px 0 0 #fdff2a, -4px 0 0 #df4a42, 2px 0 0 #91fcfe, 4px 0 0 #4405fc;
+        animation: blink 1s steps(4, start) infinite;
     }
 
     &-score {
@@ -83,10 +94,32 @@ canvas {
         color: #ffffff;
     }
 
+    &-name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        &-input {
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid #ffffff;
+            color: #ffffff;
+            font-size: 25px;
+            font-family: "Press Start 2P", cursive, "PT Mono", serif;
+        }
+
+        &-submit {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 25px;
+        }
+    }
+
     &-pressEnter {
         top: 45%;
         font-size: 26px;
         color: #ffffff;
+        margin-top: 40px;
     }
 
     & > :not(:last-child) {
@@ -96,6 +129,13 @@ canvas {
 
 .controls {
     // top: 85%;
+    position: absolute;
+    font-size: 20px;
+    color: #ffffff;
+    animation: blinker 1s linear infinite;
+}
+
+.level {
     position: absolute;
     font-size: 20px;
     color: #ffffff;
@@ -128,6 +168,51 @@ canvas {
     }
 }
 
+.gameScore {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+}
+
+.highscores {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    // align-items: center;
+    color: #ffffff;
+    width: 100%;
+
+    &_header {
+        text-align: center;
+        font-size: 50px;
+        line-height: 40px;
+        letter-spacing: 5px;
+        text-shadow: -2px 0 0 #fdff2a, -4px 0 0 #df4a42, 2px 0 0 #91fcfe, 4px 0 0 #4405fc;
+        animation: blink 1s steps(4, start) infinite;
+        margin-bottom: 100px;
+    }
+
+    &_item {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        color: #da70d6;
+
+        &:not(:last-child) {
+            margin-bottom: 20px;
+        }
+    }
+
+    &-pressEnter {
+        margin-top: 50px;
+        text-align: center;
+    }
+}
+
 @keyframes jump {
     0% {
         transform: scale(1);
@@ -136,5 +221,11 @@ canvas {
     100% {
         transform: scale(1.05);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+}
+
+@keyframes blink {
+    to {
+        visibility: hidden;
     }
 }
