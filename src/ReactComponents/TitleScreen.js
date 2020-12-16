@@ -5,7 +5,7 @@ export default class TitleScreen extends Component {
     render() {
         return (
             <div className="title">
-                <img className="title-image" src={titleImage} />
+                <img className="title-image" src={titleImage} alt="title"/>
 
                 <span className="title-pressSpace">Press Enter to start the game!</span>
             </div>
